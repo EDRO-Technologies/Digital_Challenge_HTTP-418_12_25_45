@@ -1,4 +1,4 @@
-# HTTP418 digital chellenge
+# Team: HTTP418, Digital Challenge
 
 # Подготовка окружения
 
