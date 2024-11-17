@@ -1,113 +1,46 @@
 <template>
-  <div class="card">
-      <DataTable v-model:filters="filters" :value="dataEntries" paginator showGridlines :rows="10" dataKey="date"
-              filterDisplay="menu" :loading="loading" :globalFilterFields="['date', 'debit', 'ee_consume', 'expenses', 'pump_operating']">
-          <template #header>
-              <div class="flex justify-between">
-                  <Button type="button" icon="pi pi-filter-slash" label="Clear" outlined @click="clearFilter()" />
-                  <IconField>
-                      <InputIcon>
-                          <i class="pi pi-search" />
-                      </InputIcon>
-                      <InputText v-model="filters['global'].value" placeholder="Keyword Search" />
-                  </IconField>
-              </div>
-          </template>
-          <template #empty> No data found. </template>
-          <template #loading> Loading data. Please wait. </template>
-          <Column field="date" header="Date" dataType="date" style="min-width: 10rem">
-              <template #body="{ data }">
-                  {{ formatDate(data.date) }}
-              </template>
-              <template #filter="{ filterModel }">
-                  <DatePicker v-model="filterModel.value" dateFormat="mm/dd/yy" placeholder="mm/dd/yyyy" />
-              </template>
-          </Column>
-          <Column field="debit" header="Debit" dataType="numeric" style="min-width: 10rem">
-              <template #body="{ data }">
-                  {{ formatCurrency(data.debit) }}
-              </template>
-              <template #filter="{ filterModel }">
-                  <InputNumber v-model="filterModel.value" mode="currency" currency="USD" locale="en-US" />
-              </template>
-          </Column>
-          <Column field="ee_consume" header="EE Consume" dataType="numeric" style="min-width: 10rem">
-              <template #body="{ data }">
-                  {{ formatCurrency(data.ee_consume) }}
-              </template>
-              <template #filter="{ filterModel }">
-                  <InputNumber v-model="filterModel.value" mode="currency" currency="USD" locale="en-US" />
-              </template>
-          </Column>
-          <Column field="expenses" header="Expenses" dataType="numeric" style="min-width: 10rem">
-              <template #body="{ data }">
-                  {{ formatCurrency(data.expenses) }}
-              </template>
-              <template #filter="{ filterModel }">
-                  <InputNumber v-model="filterModel.value" mode="currency" currency="USD" locale="en-US" />
-              </template>
-          </Column>
-          <Column field="pump_operating" header="Pump Operating" dataType="numeric" style="min-width: 10rem">
-              <template #body="{ data }">
-                  {{ data.pump_operating }}
-              </template>
-              <template #filter="{ filterModel }">
-                  <InputNumber v-model="filterModel.value" mode="decimal" locale="en-US" />
-              </template>
-          </Column>
-      </DataTable>
+  <div class="p-5">
+    <ButtonGroup>
+      <Button @click="setField('debit')" label="Debit" :variant="selectedField === 'debit' ? 'outlined' : ''"></Button>
+      <Button @click="setField('ee_consume')" label="EE Consume"
+        :variant="selectedField === 'ee_consume' ? 'outlined' : ''"></Button>
+      <Button @click="setField('expenses')" label="Expenses"
+        :variant="selectedField === 'expenses' ? 'outlined' : ''"></Button>
+      <Button @click="setField('pump_operating')" label="Pump Operating"
+        :variant="selectedField === 'pump_operating' ? 'outlined' : ''"></Button>
+    </ButtonGroup>
+    <DataTable :value="tops" class="w-full" :rows="10" responsive-layout="scroll" row-hover>
+      <Column field="id" header="ID" />
+      <Column field="name" header="Скважина" />
+      <Column field="value" header="Дебет (m³)" />
+      <Column field="units" header="Единицы" />
+    </DataTable>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { DataService } from '@/service/DataService'; // Измените на свой сервис
-import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
 
-const dataEntries = ref([]);
-const filters = ref({});
-const loading = ref(true);
+const tops = ref([]);
+const selectedField = ref('debit')
+const setField = async (name) => {
+  selectedField.value = name
+  await fetchTops(name)
+} 
+const fetchTops = async (name = 'debit') => {
+  const response = await fetch(
+    '/api/objects/tops/?order_field=' + name + '&order_direction=asc&date_from=2024-01-01&date_to=2024-12-31&counts=10',
+    {
+      headers: {
+        Authorization: 'Bearer ' + localStorage.getItem('token'),
+      },
+    }
+  );
+  tops.value = await response.json();
+};
 
-onMounted(() => {
-  DataService.getDataEntries().then((data) => {
-      dataEntries.value = getDataEntries(data);
-      loading.value = false;
-  });
+onMounted(async () => {
+  await fetchTops();
 });
-
-const initFilters = () => {
-  filters.value = {
-      global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-      date: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }] },
-      debit: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
-      ee_consume: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
-      expenses: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
-      pump_operating: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] }
-  };
-};
-
-initFilters();
-
-const formatDate = (value) => {
-  return new Date(value).toLocaleDateString('en-US', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-  });
-};
-
-const formatCurrency = (value) => {
-  return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-};
-
-const clearFilter = () => {
-  initFilters();
-};
-
-const getDataEntries = (data) => {
-  return [...(data || [])].map((d) => {
-      d.date = new Date(d.date);
-      return d;
-  });
-};
 </script>
+
+<style scoped></style>

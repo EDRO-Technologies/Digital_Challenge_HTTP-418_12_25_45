@@ -10,6 +10,7 @@
                 <div class="flex flex-col">
                     <div class="flex flex-col items-center">
                         <span class="font-bold mb-2">{{ slotProps.node.data.name }}</span>
+                        <span>{{ slotProps.node.data.counts }} well</span>
                     </div>
                 </div>
             </template>
@@ -17,11 +18,13 @@
                 <div class="flex flex-col">
                     <div class="flex flex-col items-center">
                         <span class="font-bold mb-2">{{ slotProps.node.data.name }}</span>
+                        <span>{{ slotProps.node.data.counts }} well</span>
                     </div>
                 </div>
             </template>
             <template #bush="slotProps" collapsible>
-                <span>{{ slotProps.node.data.name }}</span>
+                <span>{{ slotProps.node.data.name }}</span> <br>
+                <span>{{ slotProps.node.data.counts }} well</span>
             </template>
             <template #well="slotProps" collapsible>
                 <span>{{ slotProps.node.data.name }}</span>
@@ -42,14 +45,19 @@ const area = ref([
     { name: 'ТуяНефть', code: '4' }
 ]);
 
-const data = ref(null); // Изначально data равно null
+const data = ref([]);
 const selection = ref({});
 
 // Функция для получения данных из API
 const fetchData = async (objId) => {
     try {
-        const response = await axios.get(`http://127.0.0.1:3000/api/api/objects/tree/?obj_id=${objId}`);
-        data.value = response.data; // Предполагая, что данные возвращаются в нужном формате
+        const response = await axios.get(`/api/objects/tree/?obj_id=${objId}`, {
+            headers: {
+                "Authorization": 'Bearer ' + localStorage.getItem('token')
+            }
+        });
+        console.log(response.data)
+        data.value = response.data;
     } catch (error) {
         console.error("Ошибка при получении данных:", error);
     }
