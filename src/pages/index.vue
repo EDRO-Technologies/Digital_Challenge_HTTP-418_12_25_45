@@ -1,6 +1,6 @@
 <template>
     <div class="card flex-col">
-        <div class="card flex justify-center  ">
+        <div class="card flex justify-start  ">
             <Select v-model="selectedCity" :options="cities" optionLabel="name" placeholder="Select a City"
                 class="w-full md:w-56" @change="onPageChange()" />
         </div>
@@ -41,7 +41,6 @@ const cities = ref([
 const currentType = ref('wells');
 
 const fetchProducts = async (type, page = 1) => {
-    console.log(userState.token.value)
     const response = await fetch(`/api/objects/list?order_direction=asc&obj_type=${selectedCity.value.code}&page=${page}&per_page=1000`, {
         headers: {
             "Authorization": 'Bearer ' + localStorage.getItem('token')
